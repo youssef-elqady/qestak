@@ -25,6 +25,31 @@ jobs:
           flutter create --org com.qestak --project-name qestak --platforms=android .
           rm -f test/widget_test.dart
           sed -i 's/android:label="qestak"/android:label="قسطك"/' android/app/src/main/AndroidManifest.xml
+      - name: Force compileSdk 36 for all plugins
+        run: |
+          if [ -f android/build.gradle.kts ]; then
+          cat >> android/build.gradle.kts <<'KTS'
+
+          subprojects {
+              val fixSdk: Project.() -> Unit = {
+                  if (name != "app") {
+                      val ext = extensions.findByName("android")
+                      val m = ext?.javaClass?.methods?.firstOrNull { it.name == "setCompileSdk" && it.parameterCount == 1 }
+                      m?.invoke(ext, 36)
+                  }
+              }
+              if (state.executed) fixSdk() else afterEvaluate { fixSdk() }
+          }
+          KTS
+          else
+          cat >> android/build.gradle <<'GRV'
+
+          subprojects { sp ->
+              def fix = { p -> if (p.name != 'app' && p.hasProperty('android')) { p.android.compileSdk = 36 } }
+              if (sp.state.executed) { fix(sp) } else { sp.afterEvaluate { fix(sp) } }
+          }
+          GRV
+          fi
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
       - name: Run tests (does not block the APK)
