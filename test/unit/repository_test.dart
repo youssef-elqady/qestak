@@ -10,7 +10,7 @@ import 'package:qestak/data/repository.dart';
 
 int egp(int v) => v * 100;
 
-AppDatabase newDb() => AppDatabase(NativeDatabase.memory());
+AppDatabase newDb() => AppDatabase(NativeDatabase.memory(setup: enableForeignKeys));
 
 /// Customer with one contract: 3 monthly installments of 1,000 EGP (future dates).
 Future<({String customerId, String contractId})> seed(Repository repo) async {
