@@ -1,4 +1,4 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -86,9 +86,16 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _restore(BuildContext context, WidgetRef ref) async {
-    final pick = await FilePicker.platform.pickFiles();
-    final path = pick?.files.single.path;
-    if (path == null || !context.mounted) return;
+    final picked = await openFile();
+    if (picked == null || !context.mounted) return;
+    String content;
+    try {
+      content = await picked.readAsString();
+    } catch (_) {
+      snack(context, 'تعذر قراءة الملف');
+      return;
+    }
+    if (!context.mounted) return;
     final pw = await askPassword(context, confirmMode: false, title: 'كلمة مرور النسخة');
     if (pw == null || !context.mounted) return;
     final svc = ref.read(backupProvider);
@@ -96,7 +103,7 @@ class SettingsPage extends ConsumerWidget {
     await Future.delayed(const Duration(milliseconds: 150));
     OpenedBackup opened;
     try {
-      opened = await svc.open(path, pw);
+      opened = await svc.openFromString(content, pw);
     } on BackupException catch (e) {
       if (context.mounted) { _unbusy(context); snack(context, e.message); }
       return;

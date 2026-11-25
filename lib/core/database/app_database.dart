@@ -8,6 +8,8 @@ import 'tables.dart';
 
 part 'app_database.g.dart'; // generated: dart run build_runner build
 
+/// Runs on the raw SQLite connection right after opening, outside any
+/// transaction (PRAGMA foreign_keys is ignored inside a transaction).
 void enableForeignKeys(dynamic raw) => raw.execute('PRAGMA foreign_keys = ON');
 
 QueryExecutor _openConnection() => LazyDatabase(() async {
@@ -44,6 +46,11 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
-        onUpgrade: (m, from, to) async {},
+        onUpgrade: (m, from, to) async {
+          // Add stepwise migrations here: if (from < 2) { ... }
+        },
+        beforeOpen: (details) async {
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
       );
 }

@@ -156,10 +156,14 @@ class BackupService {
 
   /// Verifies file structure, password, integrity and compatibility.
   /// Nothing is written to the database.
-  Future<OpenedBackup> open(String path, String password) async {
+  Future<OpenedBackup> open(String path, String password) async =>
+      openFromString(await File(path).readAsString(), password);
+
+  /// Same as [open] but takes the file content (works with any file picker).
+  Future<OpenedBackup> openFromString(String content, String password) async {
     Map<String, dynamic> f;
     try {
-      f = jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+      f = jsonDecode(content) as Map<String, dynamic>;
     } catch (_) {
       throw BackupException('الملف تالف أو ليس نسخة احتياطية من قسطك');
     }
