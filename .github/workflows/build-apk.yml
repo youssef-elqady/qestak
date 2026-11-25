@@ -25,28 +25,12 @@ jobs:
           flutter create --org com.qestak --project-name qestak --platforms=android .
           rm -f test/widget_test.dart
           sed -i 's/android:label="qestak"/android:label="قسطك"/' android/app/src/main/AndroidManifest.xml
-      - name: Relax AAR metadata check (plugins compiled against older Android API)
+      - name: Use Android API 36 for plugin compatibility
         run: |
-          if [ -f android/build.gradle.kts ]; then
-          cat >> android/build.gradle.kts <<'KTS'
-
-          subprojects {
-              tasks.configureEach {
-                  if (name.contains("AarMetadata")) {
-                      enabled = false
-                  }
-              }
-          }
-          KTS
+          if [ -f android/app/build.gradle.kts ]; then
+            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
           else
-          cat >> android/build.gradle <<'GRV'
-
-          subprojects {
-              tasks.configureEach { t ->
-                  if (t.name.contains('AarMetadata')) { t.enabled = false }
-              }
-          }
-          GRV
+            sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/' android/app/build.gradle
           fi
       - run: flutter pub get
       - run: dart run build_runner build --delete-conflicting-outputs
